@@ -692,6 +692,10 @@ on_optionsDesignateTouchscreen_activate
                                         gpointer         user_data);
 
 void
+on_optionsPalmRejectHack_activate      (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+void
 on_journalNewPageKeepsBG_activate      (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 

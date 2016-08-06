@@ -1324,6 +1324,8 @@ void update_mappings_menu(void)
   gtk_check_menu_item_set_active(
     GTK_CHECK_MENU_ITEM(GET_COMPONENT("optionsPenDisablesTouch")), ui.pen_disables_touch);
   gtk_check_menu_item_set_active(
+    GTK_CHECK_MENU_ITEM(GET_COMPONENT("optionsPalmRejectHack")), ui.palm_rejection_hack);
+  gtk_check_menu_item_set_active(
     GTK_CHECK_MENU_ITEM(GET_COMPONENT("optionsPressureSensitive")), ui.pressure_sensitivity);
 
   switch(ui.toolno[1]) {

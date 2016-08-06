@@ -2821,11 +2821,60 @@ on_canvas_motion_notify_event          (GtkWidget       *widget,
     if ((ui.touch_as_handtool || (ui.pen_disables_touch && ui.in_proximity))
 //      && strstr(event->device->name, ui.device_for_touch) != NULL) {
         && !strcmp(event->device->name, ui.device_for_touch)) {
+#ifdef INPUT_DEBUG
+  printf("DEBUG: MotionNotify dropped touch pen, touch_as_handtool:%d pen_disables_touch:%d in_prox:%d\n", 
+    ui.touch_as_handtool, ui.pen_disables_touch, ui.in_proximity);
+#endif
       abort_stroke(); // in case we were doing a stroke this aborts it; otherwise nothing happens
       return FALSE;
     }
   }
-  if (ui.ignore_other_devices && ui.stroke_device!=event->device && !we_have_no_clue) return FALSE;
+
+  if (ui.palm_rejection_hack && !we_have_no_clue) {
+    if (ui.stroke_device!=event->device) {
+      ui.palm_reject_last_touch_x = event->x;
+      ui.palm_reject_last_touch_y = event->y;
+      ui.palm_reject_last_touch_time = event->time;
+      #ifdef INPUT_DEBUG
+        printf("DEBUG: MotionNotify set touch (%u) e(%f,%f)\n", 
+          event->time, event->x, event->y);
+      #endif
+    } else {
+      // currently the spurious events seem to have x from the pen but the y from the touch?
+      // so we are only checking against y, not x
+      gdouble diff_from_touch_y = abs(ui.palm_reject_last_touch_y - event->y);
+      gdouble diff_from_pen_y = abs(ui.palm_reject_last_pen_y - event->y);
+      guint32 diff_time = abs(event->time - ui.palm_reject_last_touch_time);
+      const guint32 max_diff_time = 1000; // 1 second
+      const gdouble max_diff_from_pen = 100.0;
+      const gdouble min_diff_from_touch = 10.0;
+      if(diff_time < max_diff_time && diff_from_pen_y > max_diff_from_pen && diff_from_touch_y < min_diff_from_touch) {
+        #ifdef INPUT_DEBUG
+          printf("DEBUG: MotionNotify dropped bad pen event, diff_time:%u (%u) e(%f,%f) l(%f,%f) diff_touch(%f) diff_pen(%f)\n", 
+            diff_time, event->time, event->x, event->y, ui.palm_reject_last_touch_x, ui.palm_reject_last_touch_y, 
+            diff_from_touch_y, diff_from_pen_y);
+        #endif
+        return FALSE;
+      }
+    }
+  }
+
+  if (ui.ignore_other_devices && ui.stroke_device!=event->device && !we_have_no_clue) {
+#ifdef INPUT_DEBUG
+  printf("DEBUG: MotionNotify dropped other device:(%s != %s) and clue:%d\n", 
+    event->device->name, ui.stroke_device->name, we_have_no_clue);
+#endif
+    return FALSE;
+  }
+
+
+
+
+#ifdef INPUT_DEBUG
+  printf("DEBUG: MotionNotify wrote (%s) (x,y)=(%.2f,%.2f), modifier %x\nui.stroke_device:%s\n", 
+    event->device->name, event->x, event->y, event->state,
+    ui.stroke_device->name);
+#endif
 
   
   if (looks_wrong) {
@@ -2873,6 +2922,10 @@ on_canvas_motion_notify_event          (GtkWidget       *widget,
   
   if (ui.cur_item_type == ITEM_STROKE) {
     continue_stroke((GdkEvent *)event);
+    if (ui.palm_rejection_hack) {
+      ui.palm_reject_last_pen_x = event->x;
+      ui.palm_reject_last_pen_y = event->y;
+    }
   }
   else if (ui.cur_item_type == ITEM_ERASURE) {
     do_eraser((GdkEvent *)event, ui.cur_brush->thickness/2,
@@ -3855,6 +3908,13 @@ on_optionsDesignateTouchscreen_activate
     }
   }
   gtk_widget_destroy(GTK_WIDGET(dialog));
+}
+
+void
+on_optionsPalmRejectHack_activate    (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+  ui.palm_rejection_hack = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
 }
 
 
