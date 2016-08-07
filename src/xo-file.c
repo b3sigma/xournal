@@ -1762,6 +1762,13 @@ void init_config_default(void)
   ui.touch_as_handtool = FALSE;
   ui.pen_disables_touch = FALSE;
   ui.device_for_touch = g_strdup(DEFAULT_DEVICE_FOR_TOUCH);
+  ui.palm_rejection_hack = FALSE;
+  gdouble outside_screen_value = -1E10; // just a large negative number that should be well outside the screen bounds 
+  ui.palm_reject_last_touch_x = outside_screen_value;
+  ui.palm_reject_last_touch_y = outside_screen_value;
+  ui.palm_reject_last_touch_time = 0;
+  ui.palm_reject_last_pen_x = outside_screen_value;
+  ui.palm_reject_last_pen_y = outside_screen_value;
   ui.autosave_enabled = FALSE;
   ui.autosave_filename_list = NULL;
   ui.autosave_delay = 5;
@@ -1912,6 +1919,9 @@ void save_config_to_file(void)
   update_keyval("general", "touchscreen_device_name",
     _(" name of touchscreen device for touchscreen_as_hand_tool"),
     g_strdup(ui.device_for_touch));
+  update_keyval("general", "palm_rejection_hack",
+    _(" enable a hack which drops touch events that are sent as pen events incorrectly (true/false) (only relevant for separate pen and touch devices)"),
+    g_strdup(ui.palm_rejection_hack?"true":"false"));
   update_keyval("general", "buttons_switch_mappings",
     _(" buttons 2 and 3 switch mappings instead of drawing (useful for some tablets) (true/false)"),
     g_strdup(ui.button_switch_mapping?"true":"false"));
@@ -2332,6 +2342,7 @@ void load_config_from_file(void)
   parse_keyval_boolean("general", "pen_disables_touch", &ui.pen_disables_touch);
   if (parse_keyval_string("general", "touchscreen_device_name", &str))
     if (str!=NULL) ui.device_for_touch = str;
+  parse_keyval_boolean("general", "palm_rejection_hack", &ui.palm_rejection_hack);
   parse_keyval_boolean("general", "buttons_switch_mappings", &ui.button_switch_mapping);
   parse_keyval_boolean("general", "autoload_pdf_xoj", &ui.autoload_pdf_xoj);
   parse_keyval_boolean("general", "autocreate_new_xoj", &ui.autocreate_new_xoj);
