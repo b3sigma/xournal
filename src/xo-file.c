@@ -1745,8 +1745,6 @@ void init_config_default(void)
   ui.palm_reject_last_touch_x = outside_screen_value;
   ui.palm_reject_last_touch_y = outside_screen_value;
   ui.palm_reject_last_touch_time = 0;
-  ui.palm_reject_last_pen_x = outside_screen_value;
-  ui.palm_reject_last_pen_y = outside_screen_value;
   ui.autosave_enabled = FALSE;
   ui.autosave_filename_list = NULL;
   ui.autosave_delay = 5;

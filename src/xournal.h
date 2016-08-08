@@ -274,8 +274,6 @@ typedef struct UIData {
   gdouble palm_reject_last_touch_x; // non-pen devices will store values here if they are not the current device (if palm_rejection_hack enabled)
   gdouble palm_reject_last_touch_y; // non-pen devices will store values here if they are not the current device (if palm_rejection_hack enabled)
   guint32 palm_reject_last_touch_time; // non-pen devices will store values here if they are not the current device (if palm_rejection_hack enabled)
-  gdouble palm_reject_last_pen_x; // pen will store values here (if palm_rejection_hack enabled)
-  gdouble palm_reject_last_pen_y; // pen will store values here (if palm_rejection_hack enabled)
   gboolean in_proximity;
   char *device_for_touch;
   int which_mouse_button; // the mouse button drawing the current path
