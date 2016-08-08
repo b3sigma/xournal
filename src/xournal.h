@@ -69,6 +69,11 @@
 // default touch device
 #define DEFAULT_DEVICE_FOR_TOUCH "Touchscr"
 
+// default device to ignore
+// Might want to make this "Virtual core XTEST pointer" but haven't tested
+// on enough other configurations. 
+#define DEFAULT_DEVICE_TO_IGNORE "No device ignored"
+
 /* a string (+ aux data) that maintains a refcount */
 
 typedef struct Refstring {
@@ -276,6 +281,7 @@ typedef struct UIData {
   guint32 palm_reject_last_touch_time; // non-pen devices will store values here if they are not the current device (if palm_rejection_hack enabled)
   gboolean in_proximity;
   char *device_for_touch;
+  char *device_to_ignore; // Useful for touchscreens that produce an additional "Virtual core XTEST pointer" event which causes dots
   int which_mouse_button; // the mouse button drawing the current path
   int which_unswitch_button; // if button_switch_mapping, the mouse button that switched the mapping
   struct Page default_page;  // the model for the default page

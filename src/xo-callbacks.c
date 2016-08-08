@@ -2456,9 +2456,7 @@ on_canvas_button_press_event           (GtkWidget       *widget,
 
   if (is_touch && is_core && ui.cur_item_type == ITEM_TEXT && ui.touch_as_handtool && ui.in_proximity) return FALSE; // workaround for touch = core as handtool
 
-  if (ui.touch_as_handtool && !strcmp(event->device->name, "Virtual core XTEST pointer")) {
-    return FALSE;
-  }
+  if (ui.touch_as_handtool && !strcmp(event->device->name, ui.device_to_ignore)) { return FALSE; }
 
   if (ui.cur_item_type == ITEM_TEXT) {
     if (!is_event_within_textview(event)) end_text();
@@ -3924,6 +3922,61 @@ on_optionsPalmRejectHack_activate    (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   ui.palm_rejection_hack = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
+}
+
+
+void on_optionsDesignateIgnoredDevice_activate
+                                       (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+  GtkDialog *dialog;
+  GtkWidget *comboList, *label, *hbox;
+  GList *dev_list; 
+  GdkDevice *dev;
+  gint response, count;
+  gchar *str;
+  gint activeItem;
+  
+  dialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("Select ignored device"),
+              NULL,
+              GTK_DIALOG_MODAL,
+              GTK_STOCK_OK, GTK_RESPONSE_OK,
+              GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+              NULL));
+  gtk_window_set_resizable(GTK_WINDOW(dialog), FALSE);
+              
+  hbox = gtk_hbox_new(FALSE, 0);
+  gtk_widget_show(hbox);
+  label = gtk_label_new(_("Ignored device:"));
+  gtk_widget_show(label);  
+  gtk_box_pack_start(GTK_BOX(dialog->vbox), hbox, FALSE, FALSE, 8);
+  gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 8);
+  
+  comboList = gtk_combo_box_new_text();
+  gtk_widget_show(comboList);
+  gtk_box_pack_start(GTK_BOX(dialog->vbox), comboList, FALSE, FALSE, 8);
+
+  activeItem = 0; // default to the "No device ignored" option
+  gtk_combo_box_append_text(GTK_COMBO_BOX(comboList), DEFAULT_DEVICE_TO_IGNORE);
+  for (dev_list = gdk_devices_list(), count = 1; dev_list != NULL; dev_list = dev_list->next, count++) {
+    dev = GDK_DEVICE(dev_list->data);
+    gtk_combo_box_append_text(GTK_COMBO_BOX(comboList), dev->name);
+    if (!strcmp(dev->name, ui.device_to_ignore)) {
+      activeItem = count;
+    }
+  }
+  gtk_combo_box_set_active(GTK_COMBO_BOX(comboList), activeItem);
+
+  response = wrapper_gtk_dialog_run(dialog);
+  if (response == GTK_RESPONSE_OK) {
+    str = gtk_combo_box_get_active_text(GTK_COMBO_BOX(comboList));
+    if (str!=NULL) {
+      g_free(ui.device_to_ignore);
+      ui.device_to_ignore = str;
+    }
+  }
+  gtk_widget_destroy(GTK_WIDGET(dialog));
+
 }
 
 

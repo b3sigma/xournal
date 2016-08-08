@@ -696,6 +696,11 @@ on_optionsPalmRejectHack_activate      (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
 void
+on_optionsDesignateIgnoredDevice_activate
+                                        (GtkMenuItem     *menuitem,
+                                        gpointer         user_data);
+
+void
 on_journalNewPageKeepsBG_activate      (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 

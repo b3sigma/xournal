@@ -1740,6 +1740,7 @@ void init_config_default(void)
   ui.touch_as_handtool = FALSE;
   ui.pen_disables_touch = FALSE;
   ui.device_for_touch = g_strdup(DEFAULT_DEVICE_FOR_TOUCH);
+  ui.device_to_ignore = g_strdup(DEFAULT_DEVICE_TO_IGNORE);
   ui.palm_rejection_hack = FALSE;
   gdouble outside_screen_value = -1E10; // just a large negative number that should be well outside the screen bounds 
   ui.palm_reject_last_touch_x = outside_screen_value;
@@ -1895,6 +1896,9 @@ void save_config_to_file(void)
   update_keyval("general", "touchscreen_device_name",
     _(" name of touchscreen device for touchscreen_as_hand_tool"),
     g_strdup(ui.device_for_touch));
+  update_keyval("general", "touchscreen_device_to_ignore",
+    _(" name of touchscreen device to ignore events"),
+    g_strdup(ui.device_to_ignore));
   update_keyval("general", "palm_rejection_hack",
     _(" enable a hack which drops touch events that are sent as pen events incorrectly (true/false) (only relevant for separate pen and touch devices)"),
     g_strdup(ui.palm_rejection_hack?"true":"false"));
@@ -2313,8 +2317,20 @@ void load_config_from_file(void)
   parse_keyval_boolean("general", "use_erasertip", &ui.use_erasertip);
   parse_keyval_boolean("general", "touchscreen_as_hand_tool", &ui.touch_as_handtool);
   parse_keyval_boolean("general", "pen_disables_touch", &ui.pen_disables_touch);
-  if (parse_keyval_string("general", "touchscreen_device_name", &str))
-    if (str!=NULL) ui.device_for_touch = str;
+  str = NULL;
+  if (parse_keyval_string("general", "touchscreen_device_name", &str)) {
+    if (str!=NULL) {
+      g_free(ui.device_for_touch);
+      ui.device_for_touch = str;
+    }
+  }
+  str = NULL;
+  if (parse_keyval_string("general", "touchscreen_device_to_ignore", &str)) {
+    if (str!=NULL) {
+      g_free(ui.device_to_ignore);
+      ui.device_to_ignore = str;
+    }
+  }
   parse_keyval_boolean("general", "palm_rejection_hack", &ui.palm_rejection_hack);
   parse_keyval_boolean("general", "buttons_switch_mappings", &ui.button_switch_mapping);
   parse_keyval_boolean("general", "autoload_pdf_xoj", &ui.autoload_pdf_xoj);
@@ -2329,6 +2345,7 @@ void load_config_from_file(void)
   parse_keyval_vorderlist("general", "interface_fullscreen", ui.vertical_order[1]);
   parse_keyval_boolean("general", "interface_lefthanded", &ui.left_handed);
   parse_keyval_boolean("general", "shorten_menus", &ui.shorten_menus);
+  str = NULL;
   if (parse_keyval_string("general", "shorten_menu_items", &str))
     if (str!=NULL) { g_free(ui.shorten_menu_items); ui.shorten_menu_items = str; }
   parse_keyval_float("general", "highlighter_opacity", &ui.hiliter_opacity, 0., 1.);
@@ -2408,6 +2425,7 @@ void load_config_from_file(void)
   parse_keyval_floatlist("tools", "pen_thicknesses", predef_thickness[TOOL_PEN], 5, 0.01, 1000.0);
   parse_keyval_floatlist("tools", "eraser_thicknesses", predef_thickness[TOOL_ERASER]+1, 3, 0.01, 1000.0);
   parse_keyval_floatlist("tools", "highlighter_thicknesses", predef_thickness[TOOL_HIGHLIGHTER]+1, 3, 0.01, 1000.0);
+  str = NULL;
   if (parse_keyval_string("tools", "default_font", &str))
     if (str!=NULL) { g_free(ui.default_font_name); ui.default_font_name = str; }
   parse_keyval_float("tools", "default_font_size", &ui.default_font_size, 1., 200.);

@@ -1643,7 +1643,17 @@
 			      <property name="label" translatable="yes">Palm rejection hack</property>
 			      <property name="use_underline">True</property>
 			      <property name="active">False</property>
-			      <signal name="activate" handler="on_optionsPalmRejectHack_activate" last_modification_time="Fri, 6 August 2016 03:00:00 GMT"/>
+			      <signal name="activate" handler="on_optionsPalmRejectHack_activate" last_modification_time="Fri, 5 August 2016 03:00:00 GMT"/>
+			    </widget>
+			  </child>
+
+			  <child>
+			    <widget class="GtkMenuItem" id="optionsDesignateIgnoredDevice">
+			      <property name="visible">True</property>
+			      <property name="label" translatable="yes">Designate ignored device...</property>
+			      <property name="use_underline">True</property>
+			      <property name="active">False</property>
+			      <signal name="activate" handler="on_optionsDesignateIgnoredDevice_activate" last_modification_time="Sun, 7 August 2016 03:00:00 GMT"/>
 			    </widget>
 			  </child>
 
