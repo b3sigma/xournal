@@ -2456,6 +2456,8 @@ on_canvas_button_press_event           (GtkWidget       *widget,
 
   if (is_touch && is_core && ui.cur_item_type == ITEM_TEXT && ui.touch_as_handtool && ui.in_proximity) return FALSE; // workaround for touch = core as handtool
 
+  if (ui.touch_as_handtool && !strcmp(event->device->name, ui.device_to_ignore)) { return FALSE; }
+
   if (ui.cur_item_type == ITEM_TEXT) {
     if (!is_event_within_textview(event)) end_text();
     else return FALSE;
@@ -2810,6 +2812,44 @@ on_canvas_motion_notify_event          (GtkWidget       *widget,
     return FALSE;
   }
 
+  if (ui.palm_rejection_hack) {
+    // This hack is in response to spurious events that come in with the
+    // event description as pen, but have one coordinate from the pen and
+    // one coordinate from the touch device. It seems to happen only when
+    // touching (with motion) and using the pen at the same time.
+    // To fix, we store off the touch coordinates and verify that if the
+    // pen input is exactly the same as the touch input, 
+    // down to 1/1000 of a pixel, at nearly the same time, then we drop
+    // the event. 
+    if (ui.stroke_device!=event->device) {
+      ui.palm_reject_last_touch_x = event->x;
+      ui.palm_reject_last_touch_y = event->y;
+      ui.palm_reject_last_touch_time = event->time;
+      #ifdef INPUT_DEBUG
+        printf("DEBUG: MotionNotify set touch (%u) e(%f,%f)\n", 
+          event->time, event->x, event->y);
+      #endif
+    } else {
+      gdouble diff_from_touch_x = abs(ui.palm_reject_last_touch_x - event->x);
+      gdouble diff_from_touch_y = abs(ui.palm_reject_last_touch_y - event->y);
+      guint32 diff_time = abs(event->time - ui.palm_reject_last_touch_time);
+      const guint32 max_diff_time = 100; // 100 ms
+      const gdouble min_diff_from_touch = 0.001;
+      if(diff_time < max_diff_time 
+          && (diff_from_touch_x < min_diff_from_touch
+              || diff_from_touch_y < min_diff_from_touch)) {
+        #ifdef INPUT_DEBUG
+          printf("DEBUG: MotionNotify dropped bad pen event, "
+              "diff_time:%u (%u) e(%f,%f) l(%f,%f) diff_touch(%f,%f)\n", 
+              diff_time, event->time, event->x, event->y, 
+              ui.palm_reject_last_touch_x, ui.palm_reject_last_touch_y, 
+              diff_from_touch_x, diff_from_touch_y);
+        #endif
+        return FALSE;
+      }
+    }
+  }
+
   // check if the button is reported as pressed...
   looks_wrong = !(event->state & (1<<(7+ui.which_mouse_button)));
   we_have_no_clue = !is_core && ui.is_corestroke && looks_wrong; 
@@ -2830,36 +2870,7 @@ on_canvas_motion_notify_event          (GtkWidget       *widget,
       abort_stroke(); // in case we were doing a stroke this aborts it; otherwise nothing happens
       return FALSE;
     }
-  }
-
-  if (ui.palm_rejection_hack && !we_have_no_clue) {
-    if (ui.stroke_device!=event->device) {
-      ui.palm_reject_last_touch_x = event->x;
-      ui.palm_reject_last_touch_y = event->y;
-      ui.palm_reject_last_touch_time = event->time;
-      #ifdef INPUT_DEBUG
-        printf("DEBUG: MotionNotify set touch (%u) e(%f,%f)\n", 
-          event->time, event->x, event->y);
-      #endif
-    } else {
-      // currently the spurious events seem to have x from the pen but the y from the touch?
-      // so we are only checking against y, not x
-      gdouble diff_from_touch_y = abs(ui.palm_reject_last_touch_y - event->y);
-      gdouble diff_from_pen_y = abs(ui.palm_reject_last_pen_y - event->y);
-      guint32 diff_time = abs(event->time - ui.palm_reject_last_touch_time);
-      const guint32 max_diff_time = 1000; // 1 second
-      const gdouble max_diff_from_pen = 100.0;
-      const gdouble min_diff_from_touch = 10.0;
-      if(diff_time < max_diff_time && diff_from_pen_y > max_diff_from_pen && diff_from_touch_y < min_diff_from_touch) {
-        #ifdef INPUT_DEBUG
-          printf("DEBUG: MotionNotify dropped bad pen event, diff_time:%u (%u) e(%f,%f) l(%f,%f) diff_touch(%f) diff_pen(%f)\n", 
-            diff_time, event->time, event->x, event->y, ui.palm_reject_last_touch_x, ui.palm_reject_last_touch_y, 
-            diff_from_touch_y, diff_from_pen_y);
-        #endif
-        return FALSE;
-      }
-    }
-  }
+  } 
 
   if (ui.ignore_other_devices && ui.stroke_device!=event->device && !we_have_no_clue) {
 #ifdef INPUT_DEBUG
@@ -2924,10 +2935,6 @@ on_canvas_motion_notify_event          (GtkWidget       *widget,
   
   if (ui.cur_item_type == ITEM_STROKE) {
     continue_stroke((GdkEvent *)event);
-    if (ui.palm_rejection_hack) {
-      ui.palm_reject_last_pen_x = event->x;
-      ui.palm_reject_last_pen_y = event->y;
-    }
   }
   else if (ui.cur_item_type == ITEM_ERASURE) {
     do_eraser((GdkEvent *)event, ui.cur_brush->thickness/2,
@@ -3917,6 +3924,61 @@ on_optionsPalmRejectHack_activate    (GtkMenuItem     *menuitem,
                                         gpointer         user_data)
 {
   ui.palm_rejection_hack = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM (menuitem));
+}
+
+
+void on_optionsDesignateIgnoredDevice_activate
+                                       (GtkMenuItem     *menuitem,
+                                        gpointer         user_data)
+{
+  GtkDialog *dialog;
+  GtkWidget *comboList, *label, *hbox;
+  GList *dev_list; 
+  GdkDevice *dev;
+  gint response, count;
+  gchar *str;
+  gint activeItem;
+  
+  dialog = GTK_DIALOG(gtk_dialog_new_with_buttons(_("Select ignored device"),
+              NULL,
+              GTK_DIALOG_MODAL,
+              GTK_STOCK_OK, GTK_RESPONSE_OK,
+              GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+              NULL));
+  gtk_window_set_resizable(GTK_WINDOW(dialog), FALSE);
+              
+  hbox = gtk_hbox_new(FALSE, 0);
+  gtk_widget_show(hbox);
+  label = gtk_label_new(_("Ignored device:"));
+  gtk_widget_show(label);  
+  gtk_box_pack_start(GTK_BOX(dialog->vbox), hbox, FALSE, FALSE, 8);
+  gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 8);
+  
+  comboList = gtk_combo_box_new_text();
+  gtk_widget_show(comboList);
+  gtk_box_pack_start(GTK_BOX(dialog->vbox), comboList, FALSE, FALSE, 8);
+
+  activeItem = 0; // default to the "No device ignored" option
+  gtk_combo_box_append_text(GTK_COMBO_BOX(comboList), DEFAULT_DEVICE_TO_IGNORE);
+  for (dev_list = gdk_devices_list(), count = 1; dev_list != NULL; dev_list = dev_list->next, count++) {
+    dev = GDK_DEVICE(dev_list->data);
+    gtk_combo_box_append_text(GTK_COMBO_BOX(comboList), dev->name);
+    if (!strcmp(dev->name, ui.device_to_ignore)) {
+      activeItem = count;
+    }
+  }
+  gtk_combo_box_set_active(GTK_COMBO_BOX(comboList), activeItem);
+
+  response = wrapper_gtk_dialog_run(dialog);
+  if (response == GTK_RESPONSE_OK) {
+    str = gtk_combo_box_get_active_text(GTK_COMBO_BOX(comboList));
+    if (str!=NULL) {
+      g_free(ui.device_to_ignore);
+      ui.device_to_ignore = str;
+    }
+  }
+  gtk_widget_destroy(GTK_WIDGET(dialog));
+
 }
 
 
