@@ -217,6 +217,8 @@ create_winMain (void)
   GtkWidget *optionsTouchAsHandTool;
   GtkWidget *optionsPenDisablesTouch;
   GtkWidget *optionsDesignateTouchscreen;
+  GtkWidget *optionsPalmRejectHack;
+  GtkWidget *optionsDesignateIgnoredDevice;
   GtkWidget *button2_mapping;
   GtkWidget *button2_mapping_menu;
   GSList *button2Pen_group = NULL;
@@ -1252,6 +1254,14 @@ create_winMain (void)
   optionsDesignateTouchscreen = gtk_menu_item_new_with_mnemonic (_("Designate as Touchscreen..."));
   gtk_widget_show (optionsDesignateTouchscreen);
   gtk_container_add (GTK_CONTAINER (pen_and_touch_menu), optionsDesignateTouchscreen);
+
+  optionsPalmRejectHack = gtk_check_menu_item_new_with_mnemonic (_("Palm rejection hack"));
+  gtk_widget_show (optionsPalmRejectHack);
+  gtk_container_add (GTK_CONTAINER (pen_and_touch_menu), optionsPalmRejectHack);
+
+  optionsDesignateIgnoredDevice = gtk_menu_item_new_with_mnemonic (_("Designate ignored device..."));
+  gtk_widget_show (optionsDesignateIgnoredDevice);
+  gtk_container_add (GTK_CONTAINER (pen_and_touch_menu), optionsDesignateIgnoredDevice);
 
   button2_mapping = gtk_menu_item_new_with_mnemonic (_("Button _2 Mapping"));
   gtk_widget_show (button2_mapping);
@@ -2383,6 +2393,12 @@ create_winMain (void)
   g_signal_connect ((gpointer) optionsDesignateTouchscreen, "activate",
                     G_CALLBACK (on_optionsDesignateTouchscreen_activate),
                     NULL);
+  g_signal_connect ((gpointer) optionsPalmRejectHack, "activate",
+                    G_CALLBACK (on_optionsPalmRejectHack_activate),
+                    NULL);
+  g_signal_connect ((gpointer) optionsDesignateIgnoredDevice, "activate",
+                    G_CALLBACK (on_optionsDesignateIgnoredDevice_activate),
+                    NULL);
   g_signal_connect ((gpointer) button2Pen, "activate",
                     G_CALLBACK (on_button2Pen_activate),
                     NULL);
@@ -2816,6 +2832,8 @@ create_winMain (void)
   GLADE_HOOKUP_OBJECT (winMain, optionsTouchAsHandTool, "optionsTouchAsHandTool");
   GLADE_HOOKUP_OBJECT (winMain, optionsPenDisablesTouch, "optionsPenDisablesTouch");
   GLADE_HOOKUP_OBJECT (winMain, optionsDesignateTouchscreen, "optionsDesignateTouchscreen");
+  GLADE_HOOKUP_OBJECT (winMain, optionsPalmRejectHack, "optionsPalmRejectHack");  
+  GLADE_HOOKUP_OBJECT (winMain, optionsDesignateIgnoredDevice, "optionsDesignateIgnoredDevice");
   GLADE_HOOKUP_OBJECT (winMain, button2_mapping, "button2_mapping");
   GLADE_HOOKUP_OBJECT (winMain, button2_mapping_menu, "button2_mapping_menu");
   GLADE_HOOKUP_OBJECT (winMain, button2Pen, "button2Pen");
