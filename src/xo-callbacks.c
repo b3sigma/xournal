@@ -2456,6 +2456,10 @@ on_canvas_button_press_event           (GtkWidget       *widget,
 
   if (is_touch && is_core && ui.cur_item_type == ITEM_TEXT && ui.touch_as_handtool && ui.in_proximity) return FALSE; // workaround for touch = core as handtool
 
+  if (ui.touch_as_handtool && !strcmp(event->device->name, "Virtual core XTEST pointer")) {
+    return FALSE;
+  }
+
   if (ui.cur_item_type == ITEM_TEXT) {
     if (!is_event_within_textview(event)) end_text();
     else return FALSE;
