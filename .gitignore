@@ -20,3 +20,5 @@ src/ttsubset/.deps/**
 src/ttsubset/libttsubset.a
 src/xournal
 stamp-h1
+
+nogithere/
