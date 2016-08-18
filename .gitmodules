@@ -1,3 +1,6 @@
 [submodule "tiny-dnn"]
 	path = tiny-dnn
 	url = https://github.com/b3sigma/tiny-dnn
+[submodule "stb"]
+	path = stb
+	url = https://github.com/b3sigma/stb
