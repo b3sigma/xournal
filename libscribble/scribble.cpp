@@ -7,9 +7,9 @@
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_RESIZE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
-#include "stb_image/stb_image.h"
-#include "stb_image/stb_image_resize.h"
-#include "stb_image/stb_image_write.h"
+#include "stb_image.h"
+#include "stb_image_resize.h"
+#include "stb_image_write.h"
 #include "tiny_cnn/tiny_cnn.h"
 
 using namespace tiny_cnn;
@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
             sample1_convnet(argv[1]);
         } else if (argc == 3) {
           // recognize("LeNet-weights", argv[1]);
-          recognize(argv[2], argv[1]);
+          recognize(argv[1], argv[2]);
         } else {
             sample1_convnet();
         }

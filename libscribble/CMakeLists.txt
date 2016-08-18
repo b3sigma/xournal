@@ -54,8 +54,13 @@ OPTION(BUILD_DOCS     "Set to ON to build documentation" OFF)
 #   Find Dependencies
 # ----------------------------------------------------------------------------
 
+# Todo do a package find thing? Maybe not as it's already a submodule so this should just work currently
 set(TINY_DNN_INCLUDE_DIRS ../tiny-dnn/)
 include_directories(${TINY_DNN_INCLUDE_DIRS})
+
+# Todo do a package find thing? Maybe not as it's already a submodule so this should just work currently
+set(STB_INCLUDE_DIRS ../stb/)
+include_directories(${STB_INCLUDE_DIRS})
 
 IF(USE_TBB)
     find_package(TBB REQUIRED)
