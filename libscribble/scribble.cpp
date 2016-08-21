@@ -12,11 +12,12 @@
 #include "stb_image_write.h"
 #include "tiny_cnn/tiny_cnn.h"
 
+// triple ugh
 using namespace tiny_cnn;
 using namespace tiny_cnn::activation;
 using namespace tiny_cnn::layers;
 
-using namespace std;
+using namespace std; //ugh
 
 void sample1_convnet(const string& data_dir_path = "../../data");
 void sample2_mlp();
@@ -25,15 +26,6 @@ void sample4_dropout();
 void sample5_unbalanced_training_data(const string& data_dir_path = "../../data");
 void sample6_graph();
 void recognize(const std::string& dictionary, const std::string& filename);
-
-extern "C" {
-    int do_a_thing_or_whatever(char* justaparam) {
-        printf("doing our thing with %s here and then we go... \n", 
-            justaparam);
-        recognize("LeNet-weights", "4.bmp");
-        return 13;
-    }
-}
 
 // rescale output to 0-100
 template <typename Activation>
@@ -113,6 +105,135 @@ void construct_net(network<sequential>& nn) {
        << convolutional_layer<tan_h>(5, 5, 5, 16, 120) // C5, 16@5x5-in, 120@1x1-out
        << fully_connected_layer<tan_h>(120, 10);       // F6, 120-in, 10-out
 }
+
+class ScribbleData {
+  public:
+    network<sequential> nn;
+};
+
+extern "C" {
+    bool initialize(char* weights_filename, void** out_scribble_handle) {
+        std::unique_ptr<ScribbleData> scribble(new ScribbleData);
+
+        construct_net(scribble->nn);
+
+        // load nets
+        string default_weights("LeNet-weights");
+        ifstream ifs((weights_filename != NULL) ? weights_filename : default_weights.c_str());
+        if(!ifs) { return false; }
+        ifs >> scribble->nn;
+
+        *out_scribble_handle = scribble.release();
+
+        return true;
+    }
+} //extern C
+
+extern "C" {
+    void cleanup(void* scribble_handle) {
+        ScribbleData* scribble = (ScribbleData*)scribble_handle;
+        delete scribble;
+    }
+} //extern C
+
+bool convert_memory_image(unsigned char* data,
+        int x_size, int y_size, int pitch_bytes, int y_stride_bytes,
+        vec_t& output) {
+
+    if(x_size != 32 || y_size != 32 || pitch_bytes != 3
+            || (y_stride_bytes < (x_size * pitch_bytes))) {
+        printf("Only supporting 32x32 of 8 bit 3 channel rgb right now\n");
+        return false;
+    }
+
+    // output is currently 32x32 and single floating point channel (-1.0,1.0)
+    double min_val = -1.0;
+    double max_val = 1.0;
+    double range = max_val - min_val;
+
+    // printf("so the bytes of red were (x:%d y:%d pit:%d str:%d)\n",
+    //     x_size, y_size, pitch_bytes, y_stride_bytes);
+    output.resize(0);
+    output.reserve(x_size * y_size);
+    for(int y = 0; y < y_size; y++) {
+        for(int x = 0; x < x_size; x++) {
+            unsigned char* pixel_channels = (unsigned char*)(data + (y_stride_bytes * y) + (pitch_bytes * x));
+            double red    = (double)(255 - pixel_channels[0]) / 255.0;
+            double green  = (double)(255 - pixel_channels[1]) / 255.0;
+            double blue   = (double)(255 - pixel_channels[2]) / 255.0;
+            // printf("%d ", pixel_channels[0]);
+            // note this is inverted (*cough*)
+            float result = ((red * range) + min_val) * -1.0;
+            output.push_back(result);
+        }
+        // printf("\n");
+    }
+    return true;
+}
+
+extern "C" {
+    bool memory_recognize(void* scribble_handle, unsigned char* image_data,
+            int x_size, int y_size, int pitch_bytes, int y_stride_bytes,
+            int* out_what_number) {
+        ScribbleData* scribble = (ScribbleData*)scribble_handle;
+
+        vec_t data;
+        convert_memory_image(image_data, x_size, y_size,
+            pitch_bytes, y_stride_bytes, data);
+        printf("yep this is terrible and data had %d, with "
+            "first(%f) third(%f) and last(%f)\n", 
+            (int)data.size(), data[0], data[2], data.back());
+
+        auto input_debug = vec2image<unsigned char>(data, {32, 32, 1});
+        auto filename = "input_debug.png";
+        if(!save_image(filename, input_debug)) {
+            cout << "failed to save " << filename << endl;
+        } else {
+            cout << "apparently did save " << filename << endl;
+        }
+
+        // recognize
+        auto res = scribble->nn.predict(data);
+        vector<pair<double, int> > scores;
+
+        // sort & print top-3
+        for (int i = 0; i < 10; i++)
+            scores.emplace_back(rescale<tan_h>(res[i]), i);
+
+        sort(scores.begin(), scores.end(), greater<pair<double, int>>());
+
+        for (int i = 0; i < 3; i++)
+            cout << scores[i].second << "," << scores[i].first << endl;
+
+        *out_what_number = scores[0].second;
+
+        
+
+        // save outputs of each layer
+        for (size_t i = 0; i < scribble->nn.depth(); i++) {
+            auto out_img = scribble->nn[i]->output_to_image();
+            auto filename = "layer_" + std::to_string(i) + ".png";
+            if (!save_image(filename, out_img)) {
+                cout << "failed to save " << filename << endl;
+            } else {
+                cout << "apparently did save " << filename << endl;
+            }
+        }
+        // save filter shape of first convolutional layer
+        {
+            auto weight = scribble->nn.at<convolutional_layer<tan_h>>(0).weight_to_image();
+            auto filename = "weights.png";
+            if (!save_image(filename, weight)) {
+                cout << "failed to save " << filename << endl;
+            } else {
+                cout << "apparently did save " << filename << endl;
+            }
+        }
+
+
+        return true;
+    }
+} // extern C
 
 void recognize(const std::string& dictionary, const std::string& filename) {
     network<sequential> nn;

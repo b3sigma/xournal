@@ -311,6 +311,19 @@ void abort_stroke(void)
 
 void finalize_stroke(void)
 {
+  // scribble support
+  // TODO: Add a proper feature flag
+  if(ui.cur_path.num_points >= 1) {
+    printf("trying to scribble...\n");
+    int xLastPointIndex = (ui.cur_path.num_points - 1) * 2;
+    int yLastPointIndex = xLastPointIndex + 1;
+    update_scribble(canvas, 
+        ui.cur_path.coords[xLastPointIndex],
+        ui.cur_path.coords[yLastPointIndex],
+        ui.cur_path.coords[0],
+        ui.cur_path.coords[1]);
+  }
+
   if (ui.cur_path.num_points == 1) { // GnomeCanvas doesn't like num_points=1
     ui.cur_path.coords[2] = ui.cur_path.coords[0]+0.1;
     ui.cur_path.coords[3] = ui.cur_path.coords[1];
@@ -349,11 +362,6 @@ void finalize_stroke(void)
   ui.cur_layer->nitems++;
   ui.cur_item = NULL;
   ui.cur_item_type = ITEM_NONE;
-
-
-  // SILLYHACK
-  this_is_a_silly_test();
-
 }
 
 /************** eraser tool *************/
