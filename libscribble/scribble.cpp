@@ -162,8 +162,7 @@ bool convert_memory_image(unsigned char* data,
             double green  = (double)(255 - pixel_channels[1]) / 255.0;
             double blue   = (double)(255 - pixel_channels[2]) / 255.0;
             // printf("%d ", pixel_channels[0]);
-            // note this is inverted (*cough*)
-            float result = ((red * range) + min_val) * -1.0;
+            float result = ((red * range) + min_val);
             output.push_back(result);
         }
         // printf("\n");
