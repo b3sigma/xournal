@@ -28,6 +28,7 @@
 #include "xo-support.h"
 #include "xo-misc.h"
 #include "xo-paint.h"
+#include "xo-scribble.h"
 
 /************** drawing nice cursors *********/
 
@@ -348,6 +349,11 @@ void finalize_stroke(void)
   ui.cur_layer->nitems++;
   ui.cur_item = NULL;
   ui.cur_item_type = ITEM_NONE;
+
+
+  // SILLYHACK
+  this_is_a_silly_test();
+
 }
 
 /************** eraser tool *************/

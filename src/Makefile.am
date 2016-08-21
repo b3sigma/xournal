@@ -25,16 +25,22 @@ xournal_SOURCES = \
 	xo-support.c xo-support.h \
 	xo-interface.c xo-interface.h \
 	xo-callbacks.c xo-callbacks.h \
-	xo-shapes.c xo-shapes.h
+	xo-shapes.c xo-shapes.h \
+	xo-scribble.c xo-scribble.h
 
 if WIN32
-  xournal_LDFLAGS = -mwindows
-  xournal_LDADD = win32/xournal.res ttsubset/libttsubset.a @PACKAGE_LIBS@ $(INTLLIBS) -lz
+#  xournal_LDFLAGS = -mwindows
+#  xournal_LDADD = win32/xournal.res ttsubset/libttsubset.a @PACKAGE_LIBS@ $(INTLLIBS) -lz
 else
-if LINUX
-  xournal_LDADD = ttsubset/libttsubset.a @PACKAGE_LIBS@ $(INTLLIBS) -lX11 -lz -lm
-else
-  xournal_LDADD = ttsubset/libttsubset.a @PACKAGE_LIBS@ $(INTLLIBS) -lz -lm
-endif
+## EXTRA_LIB_DIRS = -L../libscribble/build/ @EXTRA_LIB_DIRS@
+## EXTRA_LIBS = -lz -lm  -lscribble -lpthread -lharfbuzz @EXTRA_LIBS@
+
+	if LINUX
+##		xournal_LDADD = ttsubset/libttsubset.a @PACKAGE_LIBS@ $(INTLLIBS) -lX11 -lz -lm
+##		xournal_LDADD = ttsubset/libttsubset.a @PACKAGE_LIBS@ $(INTLLIBS) -lX11 $(EXTRA_LIB_DIRS) $(EXTRA_LIBS)
+	else
+##		xournal_LDADD = ttsubset/libttsubset.a @PACKAGE_LIBS@ $(INTLLIBS) -lz -lm
+##		xournal_LDADD = ttsubset/libttsubset.a @PACKAGE_LIBS@ $(INTLLIBS) $(EXTRA_LIB_DIRS) $(EXTRA_LIBS)
+	endif
 endif
 

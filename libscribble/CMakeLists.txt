@@ -49,6 +49,7 @@ OPTION(USE_AVX        "Set to ON to use avx"             ON)
 OPTION(BUILD_TESTS    "Set to ON to build tests"         OFF)
 OPTION(BUILD_EXAMPLES "Set to ON to build examples"      ON)
 OPTION(BUILD_DOCS     "Set to ON to build documentation" OFF)
+OPTION(BUILD_SHARED_LIBS     "Set to ON to build shared libs instead of static libs" ON)
 
 # ----------------------------------------------------------------------------
 #   Find Dependencies
@@ -125,7 +126,13 @@ SET( scribble_hdrs scribble.h)
 
 # SET(scribble_test_headers test/test.h)
 
-ADD_EXECUTABLE(scribbletest scribble.cpp ${scribble_hdrs})
+Add_Executable(scribbletest scribble_test.cpp ${scribble_hdrs})
+Add_Library(scribble scribble.cpp ${scribble_hdrs})
+
+Install(TARGETS scribble
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib/static)
 
 #IF (BUILD_EXAMPLES)
 #    ADD_EXECUTABLE(example_mnist_train examples/mnist/train.cpp ${scribble_hdrs})
@@ -211,9 +218,8 @@ message( STATUS "BUILD_EXAMPLES=${BUILD_EXAMPLES} BUILD_TESTS=${BUILD_TESTS} USE
 
 MESSAGE( STATUS "-------------------------------------------------------------------------------" )
 
-message( STATUS )
-message("    Built as dynamic libs?:" ${BUILD_SHARED_LIBS})
-message("    Compiler:"                   "${CMAKE_COMPILER}"   "${CMAKE_CXX_COMPILER}")
+message( STATUS "Built as dynamic libs?:   ${BUILD_SHARED_LIBS}")
+message( STATUS "Compiler:                 ${CMAKE_COMPILER}  ${CMAKE_CXX_COMPILER}")
 message( STATUS "C++ flags (Release):      ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE}")
 message( STATUS "C++ flags (Debug):        ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG}")
 message( STATUS "CMAKE_CXX_FLAGS:          ${CMAKE_CXX_FLAGS}")

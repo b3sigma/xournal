@@ -11,7 +11,8 @@ AC_PROG_RANLIB
 AM_PROG_AR
 AC_HEADER_STDC
 
-LDFLAGS="$LDFLAGS -lz -lm"
+dnl LDFLAGS="$LDFLAGS -lz -lm -lscribble -lpthread -lX11"
+LDFLAGS="$LDFLAGS -lgnomecanvas-2 -lart_lgpl_2 -lgtk-x11-2.0 -lgdk-x11-2.0 -latk-1.0 -lpangocairo-1.0 -lgdk_pixbuf-2.0 -lpoppler-glib -lgio-2.0 -lcairo -lpangoft2-1.0 -lpango-1.0 -lfontconfig -lgobject-2.0 -lglib-2.0 -lfreetype -lharfbuzz  -lz -lm -lscribble -lpthread -lX11 -Lttsubset -lttsubset"
 
 pkg_modules="gtk+-2.0 >= 2.10.0 libgnomecanvas-2.0 >= 2.4.0 poppler-glib >= 0.5.4 pangoft2 >= 1.0"
 PKG_CHECK_MODULES(PACKAGE, [$pkg_modules])

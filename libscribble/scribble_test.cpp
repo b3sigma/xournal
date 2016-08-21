@@ -26,12 +26,20 @@ void sample5_unbalanced_training_data(const string& data_dir_path = "../../data"
 void sample6_graph();
 void recognize(const std::string& dictionary, const std::string& filename);
 
-extern "C" {
-    int do_a_thing_or_whatever(char* justaparam) {
-        printf("doing our thing with %s here and then we go... \n", 
-            justaparam);
-        recognize("LeNet-weights", "4.bmp");
-        return 13;
+int main(int argc, char** argv) {
+    try {
+        if (argc == 2) {
+            sample1_convnet(argv[1]);
+        } else if (argc == 3) {
+          // recognize("LeNet-weights", argv[1]);
+          recognize(argv[1], argv[2]);
+        } else {
+            sample1_convnet();
+        }
+    }
+    catch (const nn_error& e)
+    {
+        std::cout << e.what() << std::endl;
     }
 }
 
