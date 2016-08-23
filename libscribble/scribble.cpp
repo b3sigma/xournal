@@ -65,6 +65,16 @@ void convert_image(const std::string& imagefilename,
         [=](uint8_t c) { return (255 - c) * (maxv - minv) / 255.0 + minv; });
 }
 
+bool save_memory_image(const std::string& imagefilename,
+        unsigned char* data, int x_size, int y_size,
+        int pitch_bytes, int y_stride_bytes) {
+    int ret = stbi_write_png(imagefilename.c_str(),
+        x_size, y_size,
+        pitch_bytes, // actually channels maybe?
+        data, y_stride_bytes);
+    return (ret != 0);    
+}
+
 bool save_image(const std::string& imagefilename,
 	const image<>& img
 	)
@@ -139,11 +149,20 @@ extern "C" {
 bool convert_memory_image(unsigned char* data,
         int x_size, int y_size, int pitch_bytes, int y_stride_bytes,
         vec_t& output) {
-
-    if(x_size != 32 || y_size != 32 || pitch_bytes != 3
-            || (y_stride_bytes < (x_size * pitch_bytes))) {
-        printf("Only supporting 32x32 of 8 bit 3 channel rgb right now\n");
+    if(pitch_bytes != 3) {
+        printf("Only supporting 8 bit 3 channel rgb right now\n");
         return false;
+    }
+    unsigned char* local_data = NULL;
+    if(x_size != 32 || y_size != 32) {
+        // it's silly to do this plus the remap but whatever
+        local_data = (unsigned char*)malloc(32 * 32 * pitch_bytes);
+        stbir_resize_uint8(data, x_size, y_size, y_stride_bytes,
+            local_data, 32, 32, 0, pitch_bytes);
+        x_size = 32; // overwrite the actual sizes with the forced 32
+        y_size = 32; // terrible
+        y_stride_bytes = x_size * pitch_bytes;
+        data = local_data;
     }
 
     // output is currently 32x32 and single floating point channel (-1.0,1.0)
@@ -151,22 +170,22 @@ bool convert_memory_image(unsigned char* data,
     double max_val = 1.0;
     double range = max_val - min_val;
 
-    // printf("so the bytes of red were (x:%d y:%d pit:%d str:%d)\n",
-    //     x_size, y_size, pitch_bytes, y_stride_bytes);
     output.resize(0);
     output.reserve(x_size * y_size);
     for(int y = 0; y < y_size; y++) {
         for(int x = 0; x < x_size; x++) {
-            unsigned char* pixel_channels = (unsigned char*)(data + (y_stride_bytes * y) + (pitch_bytes * x));
+            unsigned char* pixel_channels = 
+                (unsigned char*)(data + (y_stride_bytes * y)
+                                      + (pitch_bytes * x));
             double red    = (double)(255 - pixel_channels[0]) / 255.0;
             double green  = (double)(255 - pixel_channels[1]) / 255.0;
             double blue   = (double)(255 - pixel_channels[2]) / 255.0;
-            // printf("%d ", pixel_channels[0]);
             float result = ((red * range) + min_val);
             output.push_back(result);
         }
-        // printf("\n");
     }
+
+    free(local_data);
     return true;
 }
 
@@ -176,6 +195,14 @@ extern "C" {
             int* out_what_number) {
         ScribbleData* scribble = (ScribbleData*)scribble_handle;
 
+        auto filename = "input_pure_debug.png";
+        if(!save_memory_image(filename, image_data, x_size, y_size,
+          pitch_bytes, y_stride_bytes)) {
+            cout << "failed to save " << filename << endl;
+        } else {
+            cout << "apparently did save " << filename << endl;
+        }
+
         vec_t data;
         convert_memory_image(image_data, x_size, y_size,
             pitch_bytes, y_stride_bytes, data);
@@ -184,7 +211,7 @@ extern "C" {
             (int)data.size(), data[0], data[2], data.back());
 
         auto input_debug = vec2image<unsigned char>(data, {32, 32, 1});
-        auto filename = "input_debug.png";
+        filename = "input_debug.png";
         if(!save_image(filename, input_debug)) {
             cout << "failed to save " << filename << endl;
         } else {
