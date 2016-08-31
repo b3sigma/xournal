@@ -6,6 +6,8 @@ endif(POLICY CMP0011)
 
 project(xournal C)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+
 
 SET(VERSION "0.4.7")
 
