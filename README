@@ -1,7 +1,14 @@
-Version 0.4.8 (June 30, 2014)
+For handwritten mathematical notes, get assist? Currently forked from xournal, running tiny-dnn and a mnist digit recognizer in a difficult to discern magic box that will write out which number to the console. Neither impressive nor interesting yet.
 
-Installation:  see INSTALL
-User's manual: see html-doc/manual.html
-Updates:       see http://xournal.sourceforge.net/
+To build, you need cmake and a bunch of dependencies, but once you have figured out that dark magic:
+* mkdir build
+* cd build
+* cmake ..
+* make
+* cd ..
+* build/xournal
 
-See also: http://sourceforge.net/projects/xournal
+
+
+Forked from Xournal 0.4.8 http://xournal.sourceforge.net/
+With changes from https://github.com/dmgerman/xournal
