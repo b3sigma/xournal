@@ -9,7 +9,7 @@ project(xournal C)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 
-SET(VERSION "0.4.7")
+SET(VERSION "0.5.0")
 
 IF(NOT DEFINED SHARE_INSTALL_PREFIX)
   SET(PKGDATADIR "${CMAKE_INSTALL_PREFIX}/share/xournal")
@@ -34,5 +34,6 @@ include_directories(${GNOMECANVAS2_INCLUDE_DIRS})
 include_directories(${GTK2_INCLUDE_DIRS})
 include_directories("${PROJECT_BINARY_DIR}")
 
+add_subdirectory(libscribble)
 add_subdirectory(src/ttsubset)
 add_subdirectory(src)
